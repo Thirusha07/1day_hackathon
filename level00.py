@@ -1,25 +1,30 @@
-import json
+#import json
 
-def calculate_total_distance(order, distances):
+'''def calculate_total_distance(order, distances):
     total_distance = 0
     for i in range(len(order) - 1):
         source_key = f'n{order[i]}'
         target_key = f'n{order[i + 1]}'
-        total_distance += distances[source_key]["distances"][order[i + 1]]
+        total_distance += distances[source_key]["distances"][target_key]
     
     # Return to the starting point
     total_distance += distances[f'n{order[-1]}']["distances"][order[0]]
+    print("total distance", total_distance)
     
-    return total_distance
+    return total_distance '''
 
-def traveling_salesman_nearest_neighbor(distances):
+'''def traveling_salesman_nearest_neighbor(distances):
     num_locations = len(distances)
+  #  print("num_locations", num_locations)
     locations = list(range(num_locations))
+  #  print("locations", locations)
 
     # Start with the first location as the current location
     current_location = locations[0]
     unvisited_locations = set(locations[1:])
+    #print("unvisited_location", unvisited_locations)
     order = [current_location]
+   # print("order", order)
 
     while unvisited_locations:
         nearest_neighbor = min(unvisited_locations, key=lambda x: distances[f'n{current_location}']["distances"][x])
@@ -27,22 +32,59 @@ def traveling_salesman_nearest_neighbor(distances):
         unvisited_locations.remove(nearest_neighbor)
         current_location = nearest_neighbor
 
-    return order
+    return order'''
 
-def format_output(order, distances):
+'''def format_output(order):
     path = ["r0"] + [f'n{loc}' for loc in order] + ["r0"]
-    return {"v0": {"path": path}}
+    return {"v0": {"path": path}}'''
 
-if __name__ == "__main__":
+''''if __name__ == "__main__":
     with open("level0.json") as f:
         input_data = json.load(f)
 
     distances = input_data['neighbourhoods']
-    print("distances:",distances)
 
     best_order = traveling_salesman_nearest_neighbor(distances)
-    min_distance = calculate_total_distance(best_order, distances)
+    #min_distance = calculate_total_distance(best_order, distances)
+    path = ["r0"] + [f'n{loc}' for loc in best_order] + ["r0"]
+    output= {"v0": {"path": path}}
 
-    output = format_output(best_order, distances)
 
-    print(json.dumps(output, indent=2))
+    #output = format_output(best_order)
+
+    # Write the output to a new JSON file
+    with open("level0_output.json", "w") as output_file:
+        json.dump(output, output_file, indent=2)'''
+
+
+import networkx as nx
+import json
+
+def traveling_salesman_nearest_neighbor(distances):
+    print("Entered")
+    G = nx.Graph()
+
+    for i in range(len(distances)):
+        G.add_node(i)
+
+    for i in range(len(distances)):
+        for j in range(len(distances)):
+            if i != j:
+                # Convert i and j to integers when accessing distances
+                G.add_edge(i, j, weight=distances[f'n{i}']["distances"][f'n{j}'])
+
+    # Your other code for solving TSP using nearest neighbor heuristic
+    # ...
+
+    # Load the input data
+    with open("level0.json") as f:
+        input_data = json.load(f)
+
+    # Extract the neighborhood distances
+    distances = input_data['neighbourhoods']
+
+    # Call the function with the corrected distances
+    best_order = traveling_salesman_nearest_neighbor(distances)
+    print(best_order)
+
+

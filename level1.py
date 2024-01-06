@@ -1,50 +1,74 @@
 import json
 
-def calculate_distance(route, distances):
-    total_distance = 0
-    for i in range(len(route) - 1):
-        total_distance += distances[route[i]][route[i + 1]]
-    return total_distance
 
-def greedy_solution(remaining_neighbourhoods, current_location, capacity, distances):
+
+def traveling_salesman_nearest_neighbor(distances, max_capacity):
     current_capacity = 0
-    current_route = [current_location]
+    num_locations = len(distances)
+    locations = list(range(num_locations))
 
-    while remaining_neighbourhoods:
-        nearest_neighbour = min(remaining_neighbourhoods, key=lambda x: distances[current_location][x])
-        
-        if current_capacity + remaining_neighbourhoods[nearest_neighbour]['order_quantity'] <= capacity:
-            current_route.append(nearest_neighbour)
-            current_capacity += remaining_neighbourhoods[nearest_neighbour]['order_quantity']
-            current_location = nearest_neighbour
-            remaining_neighbourhoods.pop(nearest_neighbour)
+    # Start with the first location as the current location
+    current_location = locations[0]
+    unvisited_locations = set(locations[1:])
+    order = [current_location]
+
+    while unvisited_locations:
+        nearest_neighbor = min(unvisited_locations, key=lambda x: distances[f'n{current_location}']["distances"][x])
+
+        # Check if adding the nearest neighbor exceeds the maximum capacity
+        if current_capacity + distances[f'n{current_location}']['order_quantity'] <= max_capacity:
+            order.append(nearest_neighbor)
+            unvisited_locations.remove(nearest_neighbor)
+            current_location = nearest_neighbor
+            current_capacity += distances[f'n{current_location}']['order_quantity']
+            print(current_capacity)
         else:
-            current_route.append(current_route[0])  # Return to the starting point
-            return current_route, current_capacity
+            # If adding the nearest neighbor exceeds the capacity, return to the starting point
+            order.append(order[0])
+            current_location = order[0]
+            current_capacity = 0
+            
 
-    current_route.append(current_route[0])  # Return to the starting point
-    return current_route, current_capacity
+    return order
 
-def solve_cvrp(input_data):
-    neighbourhoods = input_data['neighbourhoods']
-    capacity = input_data['vehicles']['v0']['capacity']
-    remaining_neighbourhoods = {k: v for k, v in neighbourhoods.items()}
 
-    routes = []
 
-    while remaining_neighbourhoods:
-        current_location = 'r0' if not routes else routes[-1][-2]
-        route, route_capacity = greedy_solution(remaining_neighbourhoods, current_location, capacity, input_data['distances'])
-        routes.append(route)
+def format_output(order):
 
-    return routes
+    formatted_output = {"v0": {}}
+
+    paths = []
+    current_path = ["r0"]
+
+    for i in order:
+        if i != 0:
+            current_path.append(f'n{i}')
+        else:
+            paths.append(current_path)
+            current_path=[]
+            current_path = ["r0"]
+            current_path.append(f'n{i}')
+            
+        for i in range(0,len(paths)):
+
+            formatted_output["v0"][f"path{i}"] = paths[i]
+
+    return formatted_output
+
 
 if __name__ == "__main__":
     with open("level1a.json") as f:
         input_data = json.load(f)
 
-    solution = solve_cvrp(input_data)
+    distances = input_data['neighbourhoods']
+    max_capacity = input_data['vehicles']['v0']['capacity']
 
-    print("Solution:")
-    for idx, route in enumerate(solution):
-        print(f"Route {idx + 1}: {route} - Distance: {calculate_distance(route, input_data['distances'])}")
+    best_order = traveling_salesman_nearest_neighbor(distances, max_capacity)
+   # total_distance = calculate_total_distance(best_order, distances)
+
+    output = format_output(best_order)
+ 
+   # print("Total Distance:", total_distance)
+   # Write the output to a new JSON file
+    with open("level1a_output.json", "w") as output_file:
+        json.dump(output, output_file, indent=2)
